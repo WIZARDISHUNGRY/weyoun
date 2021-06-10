@@ -50,7 +50,8 @@ func GetAuthorizedKeysCallback() (func(conn ssh.ConnMetadata, key ssh.PublicKey)
 			return &ssh.Permissions{
 				// Record the public key used for authentication.
 				Extensions: map[string]string{
-					"pubkey-fp": ssh.FingerprintSHA256(pubKey),
+					"pubkey-fp":   ssh.FingerprintSHA256(pubKey),
+					"pubkey-type": pubKey.Type(),
 				},
 			}, nil
 		}

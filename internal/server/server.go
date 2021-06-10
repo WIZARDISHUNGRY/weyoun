@@ -79,7 +79,7 @@ func (s *Server) Start(ctx context.Context) {
 				cancel()
 			}()
 			u := conn.User()
-			log.Info().Str("user", u).Str("key", conn.Permissions.Extensions[u]).Msg("logged in")
+			log.Info().Str("user", u).Str("key", conn.Permissions.Extensions["pubkey-fp"]).Str("type", conn.Permissions.Extensions["pubkey-type"]).Msg("logged in")
 			go s.handleConn(ctx, conn, chans, reqs)
 		}()
 	}

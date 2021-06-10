@@ -7,11 +7,8 @@ import (
 	"runtime/debug"
 	"strings"
 
-	"github.com/rs/zerolog/log"
-
 	zeroconf "github.com/grandcat/zeroconf"
 	"golang.org/x/crypto/ssh"
-	"golang.org/x/crypto/ssh/knownhosts"
 )
 
 func Locate(ctx context.Context, service string, matchers [][]string) (<-chan *zeroconf.ServiceEntry, error) {
@@ -100,18 +97,18 @@ func RegisterText(pubKeys []ssh.PublicKey) (result []string) {
 		register(keyMainPath, main.Path)
 	}
 	for _, pk := range pubKeys {
-		register(keySsh, knownhosts.Line([]string{"weyoun.example.com"}, pk))
+		register(keySsh, ssh.FingerprintSHA256(pk))
 	}
 	return
 }
 
-// HostKeys keys announced in zeroconf
-func HostKeys(svc *zeroconf.ServiceEntry) []ssh.PublicKey {
+// HostKeys keys announced in zeroconf as fingerprints
+func HostKeys(svc *zeroconf.ServiceEntry) []string {
 	return parseTextRecord(svc.Text)
 }
 
-func parseTextRecord(txt []string) []ssh.PublicKey {
-	pubKeys := make([]ssh.PublicKey, 0)
+func parseTextRecord(txt []string) []string {
+	pubKeys := make([]string, 0)
 	for _, s := range txt {
 		bits := strings.SplitN(s, "=", 2)
 		if len(bits) != 2 {
@@ -120,12 +117,7 @@ func parseTextRecord(txt []string) []ssh.PublicKey {
 		k, v := bits[0], bits[1]
 		switch k {
 		case keySsh:
-			_, _, pubKey, _, _, err := ssh.ParseKnownHosts([]byte(v))
-			if err != nil {
-				log.Printf("bad key in zeroconf: %v\n", err)
-				continue
-			}
-			pubKeys = append(pubKeys, pubKey)
+			pubKeys = append(pubKeys, v)
 		}
 	}
 	return pubKeys

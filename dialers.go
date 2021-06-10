@@ -16,6 +16,7 @@ import (
 
 func Locator(ctx context.Context, serviceName string) (<-chan *zeroconf.ServiceEntry, error) {
 	// for now only connect to services who publish a text record matching one of our signing keys
+	// TODO: ideally this would be a signed version of host + port with the key
 	myKeys, err := hostkey.Signers()
 	if err != nil {
 		return nil, fmt.Errorf("failed to get user signers: %w", err)
@@ -79,7 +80,7 @@ func dialerFor(host string, svc *zeroconf.ServiceEntry,
 		}
 
 		config := &ssh.ClientConfig{
-			User: "pubkey-fp",
+			User: "pubkey-fp", // TODO don't use this
 			Auth: []ssh.AuthMethod{
 				authMethod,
 			},

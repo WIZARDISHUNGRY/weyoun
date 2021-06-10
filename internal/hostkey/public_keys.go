@@ -1,28 +1,21 @@
 package hostkey
 
 import (
-	"bytes"
 	"fmt"
 
 	"golang.org/x/crypto/ssh"
 )
 
 func GetPublicKeysCallback() (ssh.AuthMethod, error) {
-
-	agent, err := LoadAgent()
+	signers, err := getSigners()
 	if err != nil {
 		return nil, err
-	}
-	signers, err := agent.Signers()
-	if err != nil {
-		return nil, fmt.Errorf("Failed to get keys: %w", err)
 	}
 
 	return ssh.PublicKeysCallback(func() ([]ssh.Signer, error) { return signers, nil }), nil
 }
 
-func PublicKeys() ([]ssh.PublicKey, error) {
-
+func getSigners() ([]ssh.Signer, error) {
 	agent, err := LoadAgent()
 	if err != nil {
 		return nil, err
@@ -30,6 +23,16 @@ func PublicKeys() ([]ssh.PublicKey, error) {
 	signers, err := agent.Signers()
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get keys: %w", err)
+	}
+	// TODO looks like there may be a problem here?
+
+	return signers, nil
+}
+
+func PublicKeys() ([]ssh.PublicKey, error) {
+	signers, err := getSigners()
+	if err != nil {
+		return nil, err
 	}
 	pkeys := make([]ssh.PublicKey, 0)
 	for _, signer := range signers {
@@ -39,11 +42,13 @@ func PublicKeys() ([]ssh.PublicKey, error) {
 }
 
 // FilterKeys returns the union of two sets of keys
-func FilterKeys(set, intersect []ssh.PublicKey) (out []ssh.PublicKey) {
+// TODO prehash host keys (set)
+func FilterKeys(set []ssh.PublicKey, intersect []string) (out []ssh.PublicKey) {
 OUTER:
 	for _, sKey := range set {
+		h := ssh.FingerprintSHA256(sKey)
 		for _, iKey := range intersect {
-			if bytes.Equal(sKey.Marshal(), iKey.Marshal()) {
+			if h == iKey {
 				out = append(out, sKey)
 				continue OUTER
 			}
