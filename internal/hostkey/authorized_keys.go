@@ -5,13 +5,11 @@ import (
 	"io/ioutil"
 	"os/user"
 
-	"github.com/rs/zerolog/log"
-
 	"golang.org/x/crypto/ssh"
 	"golang.org/x/crypto/ssh/agent"
 )
 
-func GetAuthorizedKeysCallback() (func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error), error) {
+func GetAuthorizedKeys() ([]ssh.PublicKey, error) {
 	usr, err := user.Current()
 	if err != nil {
 		return nil, err
@@ -23,25 +21,39 @@ func GetAuthorizedKeysCallback() (func(conn ssh.ConnMetadata, key ssh.PublicKey)
 	// with the entries in the authorized_keys file.
 	authorizedKeysBytes, err := ioutil.ReadFile(authorizedKeysPath)
 	if err != nil {
-		log.Fatal().Err(err).Msg("Failed to load authorized_keys")
+		return nil, fmt.Errorf("Failed to load authorized_keys: %w", err)
+	}
+	agentKeys, err := List()
+	if err != nil {
+		return nil, err
 	}
 
-	authorizedKeysMap := map[string]bool{}
+	authorizedKeys := []ssh.PublicKey{}
 	for len(authorizedKeysBytes) > 0 {
 		pubKey, _, _, rest, err := ssh.ParseAuthorizedKey(authorizedKeysBytes)
 		if err != nil {
 			return nil, err
 		}
 
-		authorizedKeysMap[string(pubKey.Marshal())] = true
+		authorizedKeys = append(authorizedKeys, pubKey)
 		authorizedKeysBytes = rest
 	}
 
-	agentKeys, err := List()
+	for _, pubKey := range agentKeys {
+		authorizedKeys = append(authorizedKeys, pubKey)
+	}
+
+	return authorizedKeys, nil
+}
+
+func GetAuthorizedKeysCallback() (func(conn ssh.ConnMetadata, key ssh.PublicKey) (*ssh.Permissions, error), error) {
+	authorizedKeys, err := GetAuthorizedKeys()
 	if err != nil {
 		return nil, err
 	}
-	for _, pubKey := range agentKeys {
+
+	authorizedKeysMap := map[string]bool{}
+	for _, pubKey := range authorizedKeys {
 		authorizedKeysMap[string(pubKey.Marshal())] = true
 	}
 

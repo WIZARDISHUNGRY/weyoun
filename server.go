@@ -74,6 +74,11 @@ func (s *Server) Run(ctx context.Context,
 		pubKeys = append(pubKeys, key.PublicKey())
 	}
 
+	authKeys, err := hostkey.GetAuthorizedKeys()
+	if err != nil {
+		return fmt.Errorf("can't load authorized keys: %w", err)
+	}
+
 	// Once a ServerConfig has been configured, connections can be
 	// accepted.
 	lc := net.ListenConfig{}
@@ -86,7 +91,7 @@ func (s *Server) Run(ctx context.Context,
 		listener.Close()
 	}()
 
-	txtRecords := append(PublicKeys2TXTRecords(pubKeys), textRecord(keyUniq, s.id))
+	txtRecords := append(PublicKeys2TXTRecords(authKeys), textRecord(keyUniq, s.id))
 	if err := Register(ctx, s.name, s.serviceName, listener.Addr().(*net.TCPAddr), txtRecords); err != nil {
 		return fmt.Errorf("unable to register bonjour service: %w", err)
 
