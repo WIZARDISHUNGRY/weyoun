@@ -40,7 +40,6 @@ func Locate(ctx context.Context, service string, matchers, negativeMatchers [][]
 				if !matchAny(result.Text, negativeMatchers) {
 					output <- result
 				} else {
-					fmt.Println(negativeMatchers)
 					log.Debug().Str("Instance", result.Instance).Msg("and skipped")
 				}
 			case <-ctx.Done():
