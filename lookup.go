@@ -8,10 +8,11 @@ import (
 	"strings"
 
 	zeroconf "github.com/grandcat/zeroconf"
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 )
 
-func Locate(ctx context.Context, service string, matchers [][]string) (<-chan *zeroconf.ServiceEntry, error) {
+func Locate(ctx context.Context, service string, matchers, negativeMatchers [][]string) (<-chan *zeroconf.ServiceEntry, error) {
 	resolver, err := zeroconf.NewResolver(nil)
 	if err != nil {
 		return nil, fmt.Errorf("failed to initialize resolver: %w", err)
@@ -32,8 +33,15 @@ func Locate(ctx context.Context, service string, matchers [][]string) (<-chan *z
 				if result == nil {
 					return
 				}
-				if matchAny(result.Text, matchers) {
+				if !matchAny(result.Text, matchers) {
+					continue
+				}
+				log.Debug().Str("Instance", result.Instance).Msg("matched")
+				if !matchAny(result.Text, negativeMatchers) {
 					output <- result
+				} else {
+					fmt.Println(negativeMatchers)
+					log.Debug().Str("Instance", result.Instance).Msg("and skipped")
 				}
 			case <-ctx.Done():
 				return
@@ -44,7 +52,7 @@ func Locate(ctx context.Context, service string, matchers [][]string) (<-chan *z
 }
 
 func matchAny(record []string, matchers [][]string) bool {
-	ok := true
+	ok := false
 	for _, matcher := range matchers {
 		ok = match(record, matcher)
 		if ok {
@@ -87,10 +95,15 @@ const (
 	keyPrefix   = "weyoun-"
 	keySsh      = keyPrefix + "key"
 	keyMainPath = keyPrefix + "mainPath"
+	keyUniq     = keyPrefix + "uniq"
 )
 
-func RegisterText(pubKeys []ssh.PublicKey) (result []string) {
-	register := func(k, v string) { result = append(result, k+"="+v) }
+func textRecord(k, v string) string {
+	return k + "=" + v
+}
+
+func PublicKeys2TXTRecords(pubKeys []ssh.PublicKey) (result []string) {
+	register := func(k, v string) { result = append(result, textRecord(k, v)) }
 	bi, ok := debug.ReadBuildInfo()
 	if ok {
 		main := bi.Main

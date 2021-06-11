@@ -4,6 +4,8 @@ import (
 	"context"
 	"fmt"
 	"net"
+	"os"
+	"os/user"
 	"sync"
 
 	"github.com/google/uuid"
@@ -19,7 +21,7 @@ type Server struct {
 	runOnce        sync.Once
 	serviceEntries <-chan *zeroconf.ServiceEntry
 	handlers       handlers.Handlers
-	id             string
+	id, name       string
 }
 
 func NewServer(serviceName string,
@@ -30,7 +32,24 @@ func NewServer(serviceName string,
 		serviceName: serviceName,
 		handlers:    handlers,
 		id:          u.String(),
+		name:        getName(),
 	}
+}
+
+func (s *Server) GetID() string {
+	return s.id
+}
+
+func getName() string {
+	user, err := user.Current()
+	if err != nil {
+		panic(err)
+	}
+	hostname, err := os.Hostname()
+	if err != nil {
+		panic(err)
+	}
+	return fmt.Sprintf("%s@%s", user.Username, hostname)
 }
 
 func (s *Server) Run(ctx context.Context,
@@ -67,7 +86,8 @@ func (s *Server) Run(ctx context.Context,
 		listener.Close()
 	}()
 
-	if err := Register(ctx, s.id, s.serviceName, listener.Addr().(*net.TCPAddr), RegisterText(pubKeys)); err != nil {
+	txtRecords := append(PublicKeys2TXTRecords(pubKeys), textRecord(keyUniq, s.id))
+	if err := Register(ctx, s.name, s.serviceName, listener.Addr().(*net.TCPAddr), txtRecords); err != nil {
 		return fmt.Errorf("unable to register bonjour service: %w", err)
 
 	}

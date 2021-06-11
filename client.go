@@ -15,16 +15,19 @@ type Client struct {
 	runOnce                     sync.Once
 	serviceEntries              <-chan *zeroconf.ServiceEntry
 	clientHandler, closeHandler func(context.Context, *ssh.Client)
+	instanceBlacklist           []string
 }
 
 func NewClient(serviceName string,
 	clientHandler,
 	closeHandler func(context.Context, *ssh.Client),
+	instanceBlacklist []string,
 ) *Client {
 	return &Client{
-		serviceName:   serviceName,
-		clientHandler: clientHandler,
-		closeHandler:  closeHandler,
+		serviceName:       serviceName,
+		clientHandler:     clientHandler,
+		closeHandler:      closeHandler,
+		instanceBlacklist: instanceBlacklist,
 	}
 }
 
@@ -35,7 +38,7 @@ func (c *Client) Run(ctx context.Context,
 	if !ok {
 		return fmt.Errorf("already Run()")
 	}
-	c.serviceEntries, err = Locator(ctx, c.serviceName)
+	c.serviceEntries, err = Locator(ctx, c.serviceName, c.instanceBlacklist)
 	if err != nil {
 		return err
 	}

@@ -14,7 +14,7 @@ import (
 	"jonwillia.ms/weyoun/internal/hostkey"
 )
 
-func Locator(ctx context.Context, serviceName string) (<-chan *zeroconf.ServiceEntry, error) {
+func Locator(ctx context.Context, serviceName string, blacklistIDs []string) (<-chan *zeroconf.ServiceEntry, error) {
 	// for now only connect to services who publish a text record matching one of our signing keys
 	// TODO: ideally this would be a signed version of host + port with the key
 	myKeys, err := hostkey.Signers()
@@ -23,14 +23,19 @@ func Locator(ctx context.Context, serviceName string) (<-chan *zeroconf.ServiceE
 	}
 	matchers := make([][]string, 0)
 	for _, myKey := range myKeys {
-		matchers = append(matchers, RegisterText(
+		matchers = append(matchers, PublicKeys2TXTRecords(
 			[]ssh.PublicKey{
 				myKey.PublicKey(),
 			},
 		))
 	}
 
-	return Locate(ctx, serviceName, matchers)
+	antiMatchers := make([][]string, 0)
+	for _, blacklistID := range blacklistIDs {
+		antiMatchers = append(antiMatchers, []string{textRecord(keyUniq, blacklistID)})
+	}
+
+	return Locate(ctx, serviceName, matchers, antiMatchers)
 }
 
 func Dialers(ctx context.Context, svc *zeroconf.ServiceEntry) ([]func(ctx context.Context) (*ssh.Client, error), error) {
