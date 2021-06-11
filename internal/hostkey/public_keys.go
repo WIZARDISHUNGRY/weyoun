@@ -24,9 +24,18 @@ func getSigners() ([]ssh.Signer, error) {
 	if err != nil {
 		return nil, fmt.Errorf("Failed to get keys: %w", err)
 	}
-	// TODO looks like there may be a problem here?
 
-	return signers, nil
+	newSigners := make([]ssh.Signer, 0, len(signers))
+	for _, signer := range signers {
+		// RSA keys are blacklisted because I can't figure out how to
+		// disallow YubiKey keys from my gpg/ssh-agent
+		if signer.PublicKey().Type() == "ssh-rsa" {
+			continue
+		}
+		newSigners = append(newSigners, signer)
+	}
+
+	return newSigners, nil
 }
 
 func PublicKeys() ([]ssh.PublicKey, error) {
