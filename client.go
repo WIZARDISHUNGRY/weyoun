@@ -66,7 +66,8 @@ func (c *Client) eventLoop(ctx context.Context) {
 			for _, dialer := range dialers {
 				sshClient, err := dialer(ctx)
 				if err != nil {
-					log.Print("Failed to dial: ", err)
+					log.Warn().Err(err).Str("instance", svc.Instance).
+						Msg("Failed to dial")
 					continue
 				}
 				go c.clientHandler(ctx, sshClient)
