@@ -3,6 +3,7 @@ package hostkey
 import (
 	"fmt"
 
+	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
 )
 
@@ -11,6 +12,8 @@ func GetPublicKeysCallback() (ssh.AuthMethod, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	log.Debug().Interface("signers", signers).Msg("GetPublicKeysCallback")
 
 	return ssh.PublicKeysCallback(func() ([]ssh.Signer, error) { return signers, nil }), nil
 }
