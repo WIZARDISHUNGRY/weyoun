@@ -68,6 +68,9 @@ func (s *Server) Run(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("can't load host keys: %w", err)
 	}
+	if len(keys) == 0 {
+		return fmt.Errorf("no available ssh keys for server")
+	}
 	for _, key := range keys {
 		// RSA keys are blacklisted because I can't figure out how to
 		// disallow YubiKey keys from my gpg/ssh-agent
@@ -75,9 +78,6 @@ func (s *Server) Run(ctx context.Context,
 			continue
 		}
 		config.AddHostKey(key)
-	}
-	if len(pubKeys) == 0 {
-		return fmt.Errorf("no available ssh keys for server")
 	}
 
 	authKeys, err := hostkey.GetAuthorizedKeys()

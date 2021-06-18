@@ -85,7 +85,7 @@ func dialerFor(host string, svc *zeroconf.ServiceEntry,
 
 		remoteKeys = hostkey.FilterKeys(remoteKeys, zeroconfKeys)
 		if len(remoteKeys) == 0 {
-			return nil, fmt.Errorf("no possible remote keys in zeroconf dns")
+			return nil, fmt.Errorf("no possible authorized keys in zeroconf dns")
 		}
 
 		hkcb, err := hostkey.GetHostKeyCallBack(remoteKeys)

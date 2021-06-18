@@ -97,6 +97,9 @@ func TestRegisterAndLocate(t *testing.T) {
 				}
 				return
 			}
+			if svc == nil {
+				t.Fatal("no locate")
+			}
 
 			if svc.HostName == "" {
 				t.Fatal("no HostName")
