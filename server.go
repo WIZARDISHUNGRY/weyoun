@@ -6,10 +6,8 @@ import (
 	"net"
 	"os"
 	"os/user"
-	"sync"
 
 	"github.com/google/uuid"
-	"github.com/grandcat/zeroconf"
 	"golang.org/x/crypto/ssh"
 	"jonwillia.ms/weyoun/internal/hostkey"
 	"jonwillia.ms/weyoun/internal/server"
@@ -17,11 +15,9 @@ import (
 )
 
 type Server struct {
-	serviceName    string
-	runOnce        sync.Once
-	serviceEntries <-chan *zeroconf.ServiceEntry
-	handlers       handlers.Handlers
-	id, name       string
+	serviceName string
+	handlers    handlers.Handlers
+	id, name    string
 }
 
 func NewServer(serviceName string,
@@ -52,6 +48,10 @@ func getName() string {
 	return fmt.Sprintf("%s@%s", user.Username, hostname)
 }
 
+func (s *Server) GetAuthorizedKeys() ([]ssh.PublicKey, error) {
+	return hostkey.GetAuthorizedKeys()
+}
+
 func (s *Server) Run(ctx context.Context,
 ) (err error) {
 	publicKeyCallback, err := hostkey.GetAuthorizedKeysCallback()
@@ -68,10 +68,8 @@ func (s *Server) Run(ctx context.Context,
 	if err != nil {
 		return fmt.Errorf("can't load host keys: %w", err)
 	}
-	pubKeys := make([]ssh.PublicKey, 0, 0)
 	for _, key := range keys {
 		config.AddHostKey(key)
-		pubKeys = append(pubKeys, key.PublicKey())
 	}
 
 	authKeys, err := hostkey.GetAuthorizedKeys()

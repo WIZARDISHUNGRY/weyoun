@@ -8,6 +8,7 @@ import (
 	"github.com/grandcat/zeroconf"
 	"github.com/rs/zerolog/log"
 	"golang.org/x/crypto/ssh"
+	"jonwillia.ms/weyoun/internal/hostkey"
 )
 
 type Client struct {
@@ -45,6 +46,10 @@ func (c *Client) Run(ctx context.Context,
 
 	go c.eventLoop(ctx)
 	return nil
+}
+
+func (c *Client) ListPublic() ([]ssh.PublicKey, error) {
+	return hostkey.ListPublic()
 }
 
 func (c *Client) eventLoop(ctx context.Context) {

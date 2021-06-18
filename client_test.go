@@ -57,7 +57,7 @@ func TestClient(t *testing.T) {
 		httpClient := http.Client{Transport: rt}
 		resp, err := httpClient.Get("http://www.example.com/")
 		fmt.Println("get", resp, err)
-	}, func(_ context.Context, _ *ssh.Client) {})
+	}, func(_ context.Context, _ *ssh.Client) {}, nil)
 
 	err := client.Run(ctx)
 	if err != nil {

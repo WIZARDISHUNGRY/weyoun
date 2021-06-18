@@ -67,7 +67,7 @@ func GetAuthorizedKeysCallback() (func(conn ssh.ConnMetadata, key ssh.PublicKey)
 				},
 			}, nil
 		}
-		return nil, fmt.Errorf("unknown public key for %q", c.User())
+		return nil, fmt.Errorf("unknown public key for %q, fp=%+v", c.User(), ssh.FingerprintSHA256(pubKey))
 	}, nil
 }
 
@@ -82,4 +82,16 @@ func List() ([]*agent.Key, error) {
 		return nil, fmt.Errorf("failed to load agent identities: %w", err)
 	}
 	return agentKeys, nil
+}
+
+func ListPublic() ([]ssh.PublicKey, error) {
+	keys, err := List()
+	pkeys := make([]ssh.PublicKey, 0, len(keys))
+	if err != nil {
+		return nil, err
+	}
+	for _, key := range keys {
+		pkeys = append(pkeys, key)
+	}
+	return pkeys, nil
 }

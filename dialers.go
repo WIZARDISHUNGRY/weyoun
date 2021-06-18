@@ -70,7 +70,10 @@ func dialerFor(host string, svc *zeroconf.ServiceEntry,
 		addrStr := net.JoinHostPort(host, strconv.Itoa(svc.Port))
 		log.Info().Str("addr", addrStr).Msg("Connecting")
 
-		remoteKeys, err := hostkey.GetAuthorizedKeys()
+		remoteKeys, err := hostkey.ListPublic()
+		if err != nil {
+			return nil, err
+		}
 		zeroconfKeys := HostKeys(svc)
 		remoteKeys = hostkey.FilterKeys(remoteKeys, zeroconfKeys)
 

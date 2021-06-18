@@ -22,7 +22,7 @@ func Locate(ctx context.Context, service string, matchers, negativeMatchers [][]
 	output := make(chan *zeroconf.ServiceEntry)
 	err = resolver.Lookup(ctx, "", service, "", results)
 	if err != nil {
-		return nil, fmt.Errorf("Failed to Lookup: %w", err)
+		return nil, fmt.Errorf("failed to Lookup: %w", err)
 	}
 
 	go func() {
@@ -33,6 +33,7 @@ func Locate(ctx context.Context, service string, matchers, negativeMatchers [][]
 				if result == nil {
 					return
 				}
+				log.Debug().Str("Instance", result.Instance).Msg("found")
 				if !matchAny(result.Text, matchers) {
 					continue
 				}

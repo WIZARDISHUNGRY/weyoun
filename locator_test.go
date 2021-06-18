@@ -19,7 +19,7 @@ func TestLocate(t *testing.T) {
 	// t.SkipNow() //
 	ctx, cancel := context.WithTimeout(context.Background(), timeout)
 	defer cancel()
-	c, err := Locate(ctx, "_sleep-proxy._udp", nil)
+	c, err := Locate(ctx, "_sleep-proxy._udp", nil, nil)
 	if err != nil {
 		t.Fatalf("Lookup %v", err)
 	}
@@ -85,7 +85,7 @@ func TestRegisterAndLocate(t *testing.T) {
 				t.Fatalf("Register %v", err)
 			}
 
-			c, err := Locate(ctx, svcName, tC.matchers)
+			c, err := Locate(ctx, svcName, tC.matchers, nil)
 			if err != nil {
 				t.Fatalf("Locate %v", err)
 			}
