@@ -13,7 +13,9 @@ func GetPublicKeysCallback() (ssh.AuthMethod, error) {
 		return nil, err
 	}
 
-	log.Debug().Interface("signers", signers).Msg("GetPublicKeysCallback")
+	log.Debug().
+		Int("numSigners", len(signers)).
+		Msg("GetPublicKeysCallback")
 
 	return ssh.PublicKeysCallback(func() ([]ssh.Signer, error) { return signers, nil }), nil
 }

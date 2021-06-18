@@ -47,7 +47,7 @@ func Dialers(ctx context.Context, svc *zeroconf.ServiceEntry) ([]func(ctx contex
 		return s.String()
 	}
 	addrStrings := []string{}
-	for _, addr := range append(svc.AddrIPv6, svc.AddrIPv4...) {
+	for _, addr := range append(svc.AddrIPv4, svc.AddrIPv6...) {
 		s := nilStringer(addr)
 		addrStrings = append(addrStrings, s)
 	}

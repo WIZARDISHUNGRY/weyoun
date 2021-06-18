@@ -76,7 +76,7 @@ func (s *Server) Run(ctx context.Context,
 		}
 		config.AddHostKey(key)
 	}
-	if len(pubKeys) == 0 {
+	if len(keys) == 0 {
 		return fmt.Errorf("no available ssh keys for server")
 	}
 
